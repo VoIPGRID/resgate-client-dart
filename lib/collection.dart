@@ -6,10 +6,10 @@ class ResCollection<T extends ResModel> {
   final String _rid;
   final T Function() _modelFactory;
 
-  Map data;
+  final Map data;
 
   /// The list of model instances, do not modify this list!
-  List<T> models = [];
+  final List<T> models = [];
 
   ResCollection({
     required ResClient client,
@@ -44,7 +44,7 @@ class ResCollection<T extends ResModel> {
   T _createModelFromJson(String rid, Map json) {
     final model = _modelFactory();
     model.init(_client, rid);
-    model.updatFromJson(json);
+    model.updateFromJson(json);
     return model;
   }
 }

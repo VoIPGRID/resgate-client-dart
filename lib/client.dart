@@ -7,12 +7,12 @@ import 'package:resgate_client/model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ResClient {
-  late WebSocketChannel _channel;
+  late final WebSocketChannel _channel;
 
   /// We need a broadcast here as we want a temporary listener per message
   /// sent. As we can send message in an async manner we might have more
   /// than one listener at a time.
-  late Stream _stream;
+  late final Stream _stream;
 
   /// The ID of the message and the response are the same, that's how we
   /// can figure out which response corresponds to which sent message.
@@ -85,7 +85,6 @@ class ResClient {
       message["params"] = params;
     }
 
-    // Wait for the websocket to be fully connected to able to send messages.
     await _channel.ready;
 
     _channel.sink.add(jsonEncode(message));

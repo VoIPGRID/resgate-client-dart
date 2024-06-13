@@ -3,16 +3,15 @@ import 'dart:async';
 import 'package:resgate_client/client.dart';
 
 abstract class ResModel {
-  /// The model specific event stream, everytime the model is updated an event
-  /// is added to this stream. This allows clients to listen to change
-  /// events per model.
-  final StreamController _stream = StreamController.broadcast();
+  /// Everytime the model is updated an event is added to this stream.
+  /// This allows clients to add multiple listeners per model.
+  final StreamController _changeController = StreamController.broadcast();
 
   // Use late initialization for these properties so it is easier for the
   // clients to create their own models.
-  late ResClient _client;
-  late String _rid;
-  late StreamSubscription _changeListener;
+  late final ResClient _client;
+  late final String _rid;
+  late final StreamSubscription _changeListener;
 
   init(ResClient client, String rid) {
     _client = client;
@@ -20,27 +19,28 @@ abstract class ResModel {
     _listen();
   }
 
-  /// Listen for change events.
   _listen() {
     _changeListener = _client.listen(
       (json) {
         final values = json["data"]["values"];
-        updatFromJson(values);
-        _stream.add(values);
+        updateFromJson(values);
+        _changeController.add(values);
       },
       filter: (json) => json["event"] == "$_rid.change",
     );
   }
 
+  /// Listen to changes to this model.
+  StreamSubscription onChange(void Function(Map) handler) {
+    return _changeController.stream.listen((values) => handler(values));
+  }
+
   /// This model should not be used anymore after being destroyed as no events
   /// will be emitted from this model anymore.
   destroy() {
+    _changeController.close();
     _changeListener.cancel();
   }
 
-  Stream get stream {
-    return _stream.stream;
-  }
-
-  updatFromJson(Map json);
+  updateFromJson(Map json);
 }
