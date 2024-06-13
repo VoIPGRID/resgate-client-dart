@@ -1,7 +1,6 @@
 name: resgate_client
-description: A sample command-line application.
+description: A client for Resgate.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
 
 environment:
   sdk: ^3.4.3

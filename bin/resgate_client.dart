@@ -1,14 +1,28 @@
-import 'package:resgate_client/resgate_client.dart';
+import 'package:resgate_client/client.dart';
+
+class UserAvailabilityModel {
+  String userStatus;
+
+  UserAvailabilityModel({required this.userStatus});
+
+  factory UserAvailabilityModel.fromJson(Map json) {
+    return UserAvailabilityModel(
+      userStatus: json["user_status"],
+    );
+  }
+}
 
 void main() async {
   final client =
       ResClient('wss://frontend-resgate-mocking.stag.holodeck.spindle.dev');
 
-  final version = await client.version();
-  final auth = await client.authenticate();
-  final collection = await client.subscribe("availability.client.abc-123");
+  await client.version();
+  await client.authenticate("usertoken.login", {"token": "my-vg-api-token"});
 
-  print(version);
-  print(auth);
+  final collection =
+      await client.getCollection("availability.client.abc-123", (json) {
+    return UserAvailabilityModel.fromJson(json);
+  });
+
   print(collection);
 }
