@@ -7,31 +7,39 @@ class ResException implements Exception {
 
   ResException(this.data);
 
+  get id {
+    return data["id"];
+  }
+
   get message {
-    return data["message"];
+    return data["error"]["message"];
   }
 
   get code {
-    return data["code"];
+    return data["error"]["code"];
   }
 
   @override
   String toString() {
-    return "Resgate error: $message ($code)";
+    return "Resgate error for message with id: $id -> $message ($code)";
   }
 }
 
 class ResModel {
-  final StreamController<Map> _broadcast = StreamController.broadcast();
+  /// The model specific event stream, everytime the model is updated an event
+  /// is added to this stream. This allows clients to listen to change
+  /// events per model.
+  final StreamController<Map> _stream = StreamController.broadcast();
 
   late ResClient client;
   late String rid;
   late StreamSubscription _changes;
 
-  _listen() async {
-    _changes = await client.on('change', rid, (json) {
-      _broadcast.add(json["data"]["values"]);
-    });
+  _listen() {
+    _changes = client.listen(
+      (json) => _stream.add(json["data"]["values"]),
+      (json) => json["event"] == "$rid.change",
+    );
   }
 
   _stop() {
@@ -39,7 +47,7 @@ class ResModel {
   }
 
   get stream {
-    return _broadcast.stream;
+    return _stream.stream;
   }
 }
 

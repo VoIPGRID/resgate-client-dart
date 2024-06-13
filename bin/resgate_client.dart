@@ -19,6 +19,7 @@ void main() async {
   final client =
       ResClient('wss://frontend-resgate-mocking.stag.holodeck.spindle.dev');
 
+  await client.version();
   await client.authenticate("usertoken.login", {"token": "my-vg-api-token"});
 
   final collection = await client.getCollection(

@@ -7,123 +7,95 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class ResClient {
   late WebSocketChannel _channel;
 
-  /// We need a broadcast stream to able to add multiple listeners,
-  /// one per message sent.
+  /// We need a broadcast here as we want a temporary listener per message
+  /// sent. As we can send message in an async manner we might have more
+  /// than one listener at a time.
   late Stream _stream;
 
   /// The ID of the message and the response are the same, that's how we
   /// can figure out which response corresponds to which sent message.
   int _currentId = 1;
 
-  /// Store the responses we get from Resgate in memory.
-  final Map<String, dynamic> _cache = {};
-
-  /// Keep track which subscriptions are active.
-  final List<String> _subscriptions = [];
-
   ResClient(String url) {
     _channel = WebSocketChannel.connect(Uri.parse(url));
     _stream = _channel.stream.asBroadcastStream();
   }
 
-  /// Send a message and expect a response.
-  Future<Map> send(String type, String? rid, Map? params) async {
+  /// Wait when a response comes along with the given ID.
+  Future<Map> _getResponseFromId(int id) {
     final completer = Completer<Map>();
-    final id = _currentId++;
 
     late StreamSubscription sub;
 
-    // Before sending the message, set up a listener that completes this
-    // function when a response has been received with the same ID.
-    // TODO timeout, expect a response within a few seconds.
     sub = _stream.listen((message) {
       final Map json = jsonDecode(message);
 
-      // We're only interested in the response of the message we are sending.
-      if (json["id"] != id) return;
+      if (json["id"] == id) {
+        sub.cancel();
 
-      // We have the response that belongs to this message, unsubscribe from
-      // the event stream.
-      sub.cancel();
-
-      // Oh noes we got an error.
-      if (json.containsKey('error')) {
-        completer.completeError(ResException(json["error"]));
-        return;
+        if (json.containsKey("error")) {
+          completer.completeError(ResException(json));
+        } else {
+          completer.complete(json);
+        }
       }
-
-      completer.complete(json);
     });
-
-    await _sendMessage(type, rid, id, params);
 
     return completer.future;
   }
 
-  /// Subscribe to the specified event and listen for messages.
-  Future<StreamSubscription> on(
-      String event, String rid, Function(Map) onMessage) async {
-    final id = _currentId++;
-
-    final sub = _stream.listen((message) {
+  /// Listen in on the stream, executing the handler for each message.
+  /// Optionally filtering the messages where the handler is executed on.
+  StreamSubscription listen(
+    Function(Map) handler,
+    Function(Map)? filter,
+  ) {
+    return _stream.listen((message) {
       final Map json = jsonDecode(message);
 
-      if (json["event"] == '$rid.$event') {
-        onMessage(json);
+      if (json.containsKey("error")) {
+        throw ResException(json["error"]);
+      }
+
+      if (filter != null && filter(json)) {
+        handler(json);
+      } else {
+        handler(json);
       }
     });
-
-    await _sendMessage("subscribe", rid, id, null);
-
-    return sub;
   }
 
-  /// Subscribe to a collection.
   Future<ResCollection<T>> getCollection<T extends ResModel>(
       String rid, T Function(Map) modelFromJson) async {
-    if (_cache.containsKey(rid)) {
-      return _cache[rid] as ResCollection<T>;
-    }
-
-    final json = await send("subscribe", rid, null);
-
-    final collection = ResCollection(
+    final id = await _sendMessage("subscribe", rid, null);
+    final json = await _getResponseFromId(id);
+    return ResCollection(
       client: this,
       rid: rid,
       data: json["result"],
       modelFromJson: modelFromJson,
     );
-
-    _cache[rid] = collection;
-
-    return collection;
   }
 
-  /// Send the authentication so it can be stored on this connection.
+  /// Send the credentials so it can be stored on this connection.
   Future<Map> authenticate(String rid, Map params) async {
-    return await send("auth", rid, params);
+    final id = await _sendMessage("auth", rid, params);
+    return await _getResponseFromId(id);
   }
 
   /// Requests the RES protocol version of the Resgate server.
   Future<Map> version() async {
-    return await send("version", null, {"protocol": "1.2.1"});
+    final id = await _sendMessage("version", null, {"protocol": "1.2.1"});
+    return await _getResponseFromId(id);
   }
 
   /// Publish a Resgate message on the websocket stream.
-  _sendMessage(String type, String? rid, int? id, Map? params) async {
-    if (type == "subscribe" && rid != null) {
-      // Don't subscribe again to prevent double data in the data stream.
-      if (_subscriptions.contains(rid)) {
-        return;
-      }
+  Future<int> _sendMessage(String type, String? rid, Map? params) async {
+    final id = _currentId++;
 
-      _subscriptions.add(rid);
-    }
-
-    // Wait for the websocket to be fully connected to able to send messages.
-    await _channel.ready;
-
-    final Map message = {};
+    final Map message = {
+      "id": id,
+    };
 
     if (rid != null) {
       message["method"] = "$type.$rid";
@@ -135,10 +107,11 @@ class ResClient {
       message["params"] = params;
     }
 
-    if (id != null) {
-      message["id"] = id;
-    }
+    // Wait for the websocket to be fully connected to able to send messages.
+    await _channel.ready;
 
     _channel.sink.add(jsonEncode(message));
+
+    return id;
   }
 }
