@@ -1,19 +1,17 @@
 import 'package:resgate_client/client.dart';
+import 'package:resgate_client/data.dart';
 
-class UserAvailabilityModel {
-  String userStatus;
+class QueueModel extends ResModel {
+  int waitingCallers;
 
-  UserAvailabilityModel({required this.userStatus});
+  QueueModel({
+    required this.waitingCallers,
+  });
 
-  factory UserAvailabilityModel.fromJson(Map json) {
-    return UserAvailabilityModel(
-      userStatus: json["user_status"],
+  factory QueueModel.fromJson(Map json) {
+    return QueueModel(
+      waitingCallers: json["waiting_callers"],
     );
-  }
-
-  @override
-  String toString() {
-    return "UserAvailabilityModel: $userStatus";
   }
 }
 
@@ -23,10 +21,8 @@ void main() async {
 
   await client.authenticate("usertoken.login", {"token": "my-vg-api-token"});
 
-  final collection =
-      await client.getCollection("availability.client.abc-123", (json) {
-    return UserAvailabilityModel.fromJson(json);
-  });
+  final collection = await client.getCollection(
+      "dashboard.client.abc-123", (json) => QueueModel.fromJson(json));
 
-  print(collection.getModels());
+  collection.models[2].stream.listen(print);
 }

@@ -5,23 +5,29 @@ import 'package:resgate_client/data.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ResClient {
-  /// The ID of the message and the response are the same, that's how we
-  /// can figure out which response corresponds to which sent message.
-  int _currentId = 1;
-
   late WebSocketChannel _channel;
 
   /// We need a broadcast stream to able to add multiple listeners,
   /// one per message sent.
   late Stream _stream;
 
+  /// The ID of the message and the response are the same, that's how we
+  /// can figure out which response corresponds to which sent message.
+  int _currentId = 1;
+
+  /// Store the responses we get from Resgate in memory.
+  final Map<String, dynamic> _cache = {};
+
+  /// Keep track which subscriptions are active.
+  final List<String> _subscriptions = [];
+
   ResClient(String url) {
     _channel = WebSocketChannel.connect(Uri.parse(url));
     _stream = _channel.stream.asBroadcastStream();
   }
 
-  /// Send a message through the websocket and return the response as JSON.
-  Future<Map> _send(Map json) async {
+  /// Send a message and expect a response.
+  Future<Map> send(String type, String? rid, Map? params) async {
     final completer = Completer<Map>();
     final id = _currentId++;
 
@@ -42,56 +48,97 @@ class ResClient {
 
       // Oh noes we got an error.
       if (json.containsKey('error')) {
-        final code = json["error"]["code"];
-        final message = json["error"]["message"];
-
-        completer.completeError(ResError(code, message));
+        completer.completeError(ResException(json["error"]));
         return;
       }
 
       completer.complete(json);
     });
 
-    // Make sure the connection has been established before sending the message.
-    await _channel.ready;
-
-    // Add the ID to the object before sending it, we need this to idenfity
-    // the response that corresponds with this message.
-    json["id"] = id;
-
-    _channel.sink.add(jsonEncode(json));
+    await _sendMessage(type, rid, id, params);
 
     return completer.future;
   }
 
-  /// Subscribe to a collection.
-  Future<ResCollection<T>> getCollection<T>(
-      String rid, T Function(Map) modelFromJson) async {
-    final json = await _send({
-      "method": "subscribe.$rid",
+  /// Subscribe to the specified event and listen for messages.
+  Future<StreamSubscription> on(
+      String event, String rid, Function(Map) onMessage) async {
+    final id = _currentId++;
+
+    final sub = _stream.listen((message) {
+      final Map json = jsonDecode(message);
+
+      if (json["event"] == '$rid.$event') {
+        onMessage(json);
+      }
     });
 
-    return ResCollection(
+    await _sendMessage("subscribe", rid, id, null);
+
+    return sub;
+  }
+
+  /// Subscribe to a collection.
+  Future<ResCollection<T>> getCollection<T extends ResModel>(
+      String rid, T Function(Map) modelFromJson) async {
+    if (_cache.containsKey(rid)) {
+      return _cache[rid] as ResCollection<T>;
+    }
+
+    final json = await send("subscribe", rid, null);
+
+    final collection = ResCollection(
       client: this,
       rid: rid,
       data: json["result"],
       modelFromJson: modelFromJson,
     );
+
+    _cache[rid] = collection;
+
+    return collection;
   }
 
   /// Send the authentication so it can be stored on this connection.
-  Future<Map> authenticate(String subject, Map params) async {
-    return await _send({
-      "method": "auth.$subject",
-      "params": params,
-    });
+  Future<Map> authenticate(String rid, Map params) async {
+    return await send("auth", rid, params);
   }
 
   /// Requests the RES protocol version of the Resgate server.
   Future<Map> version() async {
-    return await _send({
-      "method": "version",
-      "params": {"protocol": "1.2.1"}
-    });
+    return await send("version", null, {"protocol": "1.2.1"});
+  }
+
+  /// Publish a Resgate message on the websocket stream.
+  _sendMessage(String type, String? rid, int? id, Map? params) async {
+    if (type == "subscribe" && rid != null) {
+      // Don't subscribe again to prevent double data in the data stream.
+      if (_subscriptions.contains(rid)) {
+        return;
+      }
+
+      _subscriptions.add(rid);
+    }
+
+    // Wait for the websocket to be fully connected to able to send messages.
+    await _channel.ready;
+
+    final Map message = {};
+
+    if (rid != null) {
+      message["method"] = "$type.$rid";
+    } else {
+      message["method"] = type;
+    }
+
+    if (params != null) {
+      message["params"] = params;
+    }
+
+    if (id != null) {
+      message["id"] = id;
+    }
+
+    _channel.sink.add(jsonEncode(message));
   }
 }
