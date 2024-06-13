@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:resgate_client/data.dart';
+import 'package:resgate_client/collection.dart';
+import 'package:resgate_client/exceptions.dart';
+import 'package:resgate_client/model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ResClient {
@@ -21,8 +23,8 @@ class ResClient {
     _stream = _channel.stream.asBroadcastStream();
   }
 
-  /// Wait when a response comes along with the given ID.
-  Future<Map> _getResponseFromId(int id) {
+  /// Wait for a response that has the given id.
+  Future<Map> _getResponse(int id) {
     final completer = Completer<Map>();
 
     late StreamSubscription sub;
@@ -45,17 +47,13 @@ class ResClient {
   }
 
   /// Listen in on the stream, executing the handler for each message.
-  /// Optionally filtering the messages where the handler is executed on.
+  /// Optionally filtering the messages that the handler is executed on.
   StreamSubscription listen(
-    Function(Map) handler,
+    Function(Map) handler, {
     Function(Map)? filter,
-  ) {
+  }) {
     return _stream.listen((message) {
       final Map json = jsonDecode(message);
-
-      if (json.containsKey("error")) {
-        throw ResException(json["error"]);
-      }
 
       if (filter != null && filter(json)) {
         handler(json);
@@ -65,10 +63,11 @@ class ResClient {
     });
   }
 
+  /// Subscribe to a collection.
   Future<ResCollection<T>> getCollection<T extends ResModel>(
       String rid, T Function(Map) modelFromJson) async {
     final id = await _sendMessage("subscribe", rid, null);
-    final json = await _getResponseFromId(id);
+    final json = await _getResponse(id);
     return ResCollection(
       client: this,
       rid: rid,
@@ -80,13 +79,13 @@ class ResClient {
   /// Send the credentials so it can be stored on this connection.
   Future<Map> authenticate(String rid, Map params) async {
     final id = await _sendMessage("auth", rid, params);
-    return await _getResponseFromId(id);
+    return await _getResponse(id);
   }
 
   /// Requests the RES protocol version of the Resgate server.
   Future<Map> version() async {
     final id = await _sendMessage("version", null, {"protocol": "1.2.1"});
-    return await _getResponseFromId(id);
+    return await _getResponse(id);
   }
 
   /// Publish a Resgate message on the websocket stream.

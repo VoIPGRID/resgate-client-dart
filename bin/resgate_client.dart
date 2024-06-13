@@ -1,5 +1,5 @@
 import 'package:resgate_client/client.dart';
-import 'package:resgate_client/data.dart';
+import 'package:resgate_client/model.dart';
 
 class QueueModel extends ResModel {
   int waitingCallers;
