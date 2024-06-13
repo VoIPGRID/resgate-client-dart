@@ -23,40 +23,19 @@ class ResClient {
     _stream = _channel.stream.asBroadcastStream();
   }
 
-  /// Wait for a response that has the given id.
-  Future<Map> _getResponse(int id) {
-    final completer = Completer<Map>();
-
-    late StreamSubscription sub;
-
-    sub = _stream.listen((message) {
-      final Map json = jsonDecode(message);
-
-      if (json["id"] == id) {
-        sub.cancel();
-
-        if (json.containsKey("error")) {
-          completer.completeError(ResException(json));
-        } else {
-          completer.complete(json);
-        }
-      }
-    });
-
-    return completer.future;
-  }
-
   /// Listen in on the stream, executing the handler for each message.
   /// Optionally filtering the messages that the handler is executed on.
   StreamSubscription listen(
     Function(Map) handler, {
-    Function(Map)? filter,
+    bool Function(Map)? filter,
   }) {
     return _stream.listen((message) {
       final Map json = jsonDecode(message);
 
-      if (filter != null && filter(json)) {
-        handler(json);
+      if (filter != null) {
+        if (filter(json)) {
+          handler(json);
+        }
       } else {
         handler(json);
       }
@@ -65,14 +44,14 @@ class ResClient {
 
   /// Subscribe to a collection.
   Future<ResCollection<T>> getCollection<T extends ResModel>(
-      String rid, T Function(Map) modelFromJson) async {
+      String rid, T Function() modelFactory) async {
     final id = await _sendMessage("subscribe", rid, null);
     final json = await _getResponse(id);
     return ResCollection(
       client: this,
       rid: rid,
       data: json["result"],
-      modelFromJson: modelFromJson,
+      modelFactory: modelFactory,
     );
   }
 
@@ -112,5 +91,28 @@ class ResClient {
     _channel.sink.add(jsonEncode(message));
 
     return id;
+  }
+
+  /// Wait for a response that has the given id.
+  Future<Map> _getResponse(int id) {
+    final completer = Completer<Map>();
+
+    late StreamSubscription sub;
+
+    sub = _stream.listen((message) {
+      final Map json = jsonDecode(message);
+
+      if (json["id"] == id) {
+        sub.cancel();
+
+        if (json.containsKey("error")) {
+          completer.completeError(ResException(json));
+        } else {
+          completer.complete(json);
+        }
+      }
+    });
+
+    return completer.future;
   }
 }

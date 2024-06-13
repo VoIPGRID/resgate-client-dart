@@ -2,16 +2,13 @@ import 'package:resgate_client/client.dart';
 import 'package:resgate_client/model.dart';
 
 class QueueModel extends ResModel {
-  int waitingCallers;
+  int waitingCallers = 0;
 
-  QueueModel({
-    required this.waitingCallers,
-  });
-
-  factory QueueModel.fromJson(Map json) {
-    return QueueModel(
-      waitingCallers: json["waiting_callers"],
-    );
+  @override
+  updatFromJson(Map json) {
+    if (json.containsKey("waiting_callers")) {
+      waitingCallers = json["waiting_callers"];
+    }
   }
 }
 
@@ -23,7 +20,7 @@ void main() async {
   await client.authenticate("usertoken.login", {"token": "my-vg-api-token"});
 
   final collection = await client.getCollection(
-      "dashboard.client.abc-123", (json) => QueueModel.fromJson(json));
+      "dashboard.client.abc-123", () => QueueModel());
 
   collection.models[2].stream.listen(print);
 }

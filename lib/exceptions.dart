@@ -17,6 +17,6 @@ class ResException implements Exception {
 
   @override
   String toString() {
-    return "Resgate error for message with id: $id -> $message ($code)";
+    return "Resgate error for websocket message with id: $id -> $message ($code)";
   }
 }
