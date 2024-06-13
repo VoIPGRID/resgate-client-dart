@@ -65,39 +65,33 @@ class ResClient {
   }
 
   /// Subscribe to a collection.
-  Future<ResResult<CollectionResult<T>>> getCollection<T>(
-      String subject, T Function(Map) modelFromJson) async {
+  Future<ResCollection<T>> getCollection<T>(
+      String rid, T Function(Map) modelFromJson) async {
     final json = await _send({
-      "method": "subscribe.$subject",
+      "method": "subscribe.$rid",
     });
 
-    return ResResult.fromJson(json, (json) {
-      return CollectionResult.fromJson(json, modelFromJson);
-    });
+    return ResCollection(
+      client: this,
+      rid: rid,
+      data: json["result"],
+      modelFromJson: modelFromJson,
+    );
   }
 
   /// Send the authentication so it can be stored on this connection.
-  Future<ResResult<AuthenticateResult>> authenticate(
-      String subject, Map params) async {
-    final json = await _send({
+  Future<Map> authenticate(String subject, Map params) async {
+    return await _send({
       "method": "auth.$subject",
       "params": params,
-    });
-
-    return ResResult.fromJson(json, (json) {
-      return AuthenticateResult.fromJson(json);
     });
   }
 
   /// Requests the RES protocol version of the Resgate server.
-  Future<ResResult<VersionResult>> version() async {
-    final json = await _send({
+  Future<Map> version() async {
+    return await _send({
       "method": "version",
       "params": {"protocol": "1.2.1"}
-    });
-
-    return ResResult.fromJson(json, (json) {
-      return VersionResult.fromJson(json);
     });
   }
 }

@@ -10,13 +10,17 @@ class UserAvailabilityModel {
       userStatus: json["user_status"],
     );
   }
+
+  @override
+  String toString() {
+    return "UserAvailabilityModel: $userStatus";
+  }
 }
 
 void main() async {
   final client =
       ResClient('wss://frontend-resgate-mocking.stag.holodeck.spindle.dev');
 
-  await client.version();
   await client.authenticate("usertoken.login", {"token": "my-vg-api-token"});
 
   final collection =
@@ -24,5 +28,5 @@ void main() async {
     return UserAvailabilityModel.fromJson(json);
   });
 
-  print(collection);
+  print(collection.getModels());
 }
