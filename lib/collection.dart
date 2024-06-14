@@ -7,8 +7,9 @@ import 'package:resgate_client/model.dart';
 class ResCollection<T extends ResModel> {
   // Everytime the collection is updated an event is added to this stream.
   // This allows clients to add multiple listeners per collection.
-  final StreamController _addEventsController = StreamController.broadcast();
-  final StreamController _removeEventsController = StreamController.broadcast();
+  final StreamController<T> _addEventsController = StreamController.broadcast();
+  final StreamController<T> _removeEventsController =
+      StreamController.broadcast();
 
   final ResClient _client;
   final T Function() _modelFactory;
@@ -61,12 +62,12 @@ class ResCollection<T extends ResModel> {
   }
 
   /// Execute [handler] everytime a model is added to this colletion.
-  StreamSubscription onAdd(void Function(Map) handler) {
+  StreamSubscription onAdd(void Function(T) handler) {
     return _addEventsController.stream.listen((model) => handler(model));
   }
 
   /// Execute [handler] everytime a model is removed from the collection.
-  StreamSubscription onRemove(void Function(Map) handler) {
+  StreamSubscription onRemove(void Function(T) handler) {
     return _removeEventsController.stream.listen((model) => handler(model));
   }
 

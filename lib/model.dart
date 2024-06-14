@@ -5,7 +5,8 @@ import 'package:resgate_client/client.dart';
 abstract class ResModel {
   // Everytime the model is updated an event is added to this stream.
   // This allows clients to add multiple listeners per model.
-  final StreamController _changeEventsController = StreamController.broadcast();
+  final StreamController<Map> _changeEventsController =
+      StreamController.broadcast();
 
   // Use late initialization for these properties so it is easier for the
   // clients to create their own models.

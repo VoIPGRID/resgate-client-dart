@@ -48,7 +48,7 @@ class ResClient {
     return await receive(id);
   }
 
-  /// Publish a Resgate message on the websocket stream.
+  /// Publish a Resgate message on the websocket channel.
   Future<int> send(String type, String? rid, Map? params) async {
     final id = _currentId++;
 
