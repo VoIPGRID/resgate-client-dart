@@ -44,4 +44,7 @@ void main() async {
     // You can also get the updated value straight from the model instance.
     print(model.waitingCallers);
   });
+
+  // When you're done with the collection you can call destroy on it.
+  // collection.destroy();
 }

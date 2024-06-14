@@ -11,8 +11,8 @@ abstract class ResModel {
   // Use late initialization for these properties so it is easier for the
   // clients to create their own models.
   late final ResClient _client;
-  late final String rid;
   late final StreamSubscription _changeListener;
+  late final String rid;
 
   /// Initialize the model and start listening for events.
   init(ResClient client, String rid) {

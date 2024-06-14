@@ -20,4 +20,5 @@
   - re-authenticate on reconnect
 - stay-alive messages (otherwise the mobile phone might kill the websocket after an amount of time?)
 - proper typing (a lot of stuff is `dynamic`)
+- caching (prevent double subscriptions)
 - tests

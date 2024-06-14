@@ -52,23 +52,23 @@ class ResClient {
   Future<int> send(String type, String? rid, Map? params) async {
     final id = _currentId++;
 
-    final Map message = {
+    final Map msg = {
       "id": id,
     };
 
     if (rid != null) {
-      message["method"] = "$type.$rid";
+      msg["method"] = "$type.$rid";
     } else {
-      message["method"] = type;
+      msg["method"] = type;
     }
 
     if (params != null) {
-      message["params"] = params;
+      msg["params"] = params;
     }
 
     await _channel.ready;
 
-    _channel.sink.add(jsonEncode(message));
+    _channel.sink.add(jsonEncode(msg));
 
     return id;
   }
@@ -79,8 +79,8 @@ class ResClient {
 
     late StreamSubscription sub;
 
-    sub = _stream.listen((message) {
-      final Map json = jsonDecode(message);
+    sub = _stream.listen((msg) {
+      final Map json = jsonDecode(msg);
 
       if (json["id"] == id) {
         sub.cancel();
@@ -102,8 +102,8 @@ class ResClient {
     Function(Map) handler, {
     bool Function(Map)? filter,
   }) {
-    return _stream.listen((message) {
-      final Map json = jsonDecode(message);
+    return _stream.listen((msg) {
+      final Map json = jsonDecode(msg);
 
       if (filter != null) {
         if (filter(json)) {
