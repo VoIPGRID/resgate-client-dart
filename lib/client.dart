@@ -45,8 +45,8 @@ class ResClient {
   /// Subscribe to a collection.
   Future<ResCollection<T>> getCollection<T extends ResModel>(
       String rid, T Function() modelFactory) async {
-    final id = await _sendMessage("subscribe", rid, null);
-    final json = await _getResponse(id);
+    final id = await send("subscribe", rid, null);
+    final json = await receive(id);
     return ResCollection(
       client: this,
       rid: rid,
@@ -57,18 +57,18 @@ class ResClient {
 
   /// Send the credentials so it can be stored on this connection.
   Future<Map> authenticate(String rid, Map params) async {
-    final id = await _sendMessage("auth", rid, params);
-    return await _getResponse(id);
+    final id = await send("auth", rid, params);
+    return await receive(id);
   }
 
   /// Requests the RES protocol version of the Resgate server.
   Future<Map> version() async {
-    final id = await _sendMessage("version", null, {"protocol": "1.2.1"});
-    return await _getResponse(id);
+    final id = await send("version", null, {"protocol": "1.2.1"});
+    return await receive(id);
   }
 
   /// Publish a Resgate message on the websocket stream.
-  Future<int> _sendMessage(String type, String? rid, Map? params) async {
+  Future<int> send(String type, String? rid, Map? params) async {
     final id = _currentId++;
 
     final Map message = {
@@ -93,7 +93,7 @@ class ResClient {
   }
 
   /// Wait for a response that has the given id.
-  Future<Map> _getResponse(int id) {
+  Future<Map> receive(int id) {
     final completer = Completer<Map>();
 
     late StreamSubscription sub;
