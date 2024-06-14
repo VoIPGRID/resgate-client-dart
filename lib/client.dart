@@ -9,37 +9,18 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class ResClient {
   late final WebSocketChannel _channel;
 
-  /// We need a broadcast here as we want a temporary listener per message
-  /// sent. As we can send message in an async manner we might have more
+  /// We need a broadcast stream here as we want a temporary listener per
+  /// message sent. As we can send message in an async manner we might have more
   /// than one listener at a time.
   late final Stream _stream;
 
-  /// The ID of the message and the response are the same, that's how we
-  /// can figure out which response corresponds to which sent message.
+  /// The ID of the message and the response are the same, that's how we can
+  /// figure out which response corresponds to which sent message.
   int _currentId = 1;
 
   ResClient(String url) {
     _channel = WebSocketChannel.connect(Uri.parse(url));
     _stream = _channel.stream.asBroadcastStream();
-  }
-
-  /// Listen in on the stream, executing the handler for each message.
-  /// Optionally filtering the messages that the handler is executed on.
-  StreamSubscription listen(
-    Function(Map) handler, {
-    bool Function(Map)? filter,
-  }) {
-    return _stream.listen((message) {
-      final Map json = jsonDecode(message);
-
-      if (filter != null) {
-        if (filter(json)) {
-          handler(json);
-        }
-      } else {
-        handler(json);
-      }
-    });
   }
 
   /// Subscribe to a collection.
@@ -113,5 +94,24 @@ class ResClient {
     });
 
     return completer.future;
+  }
+
+  /// Listen in on the stream, executing the handler for each message.
+  /// Optionally filtering the messages that the handler is executed on.
+  StreamSubscription listen(
+    Function(Map) handler, {
+    bool Function(Map)? filter,
+  }) {
+    return _stream.listen((message) {
+      final Map json = jsonDecode(message);
+
+      if (filter != null) {
+        if (filter(json)) {
+          handler(json);
+        }
+      } else {
+        handler(json);
+      }
+    });
   }
 }
