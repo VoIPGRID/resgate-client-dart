@@ -26,7 +26,6 @@ abstract class ResModel {
     _changeListener = _client.listen(
       (msg) {
         final updatedValues = msg["data"]["values"];
-
         updateFromJson(updatedValues);
         _changeEventsController.add(updatedValues);
       },

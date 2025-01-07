@@ -114,4 +114,9 @@ class ResClient {
       }
     });
   }
+
+  /// Close the websocket connection.
+  void destroy() {
+    _channel.sink.close();
+  }
 }

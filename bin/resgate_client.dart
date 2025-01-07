@@ -14,7 +14,7 @@ class QueueModel extends ResModel {
 
 void main() async {
   final client =
-      ResClient('wss://frontend-resgate-mocking.stag.holodeck.spindle.dev');
+      ResClient('wss://frontend-resgate-mocking.eu-staging.holodeck.voys.nl');
 
   // You need to authenticate in order to subscribe.
   // Try commenting this out to see an access denied error.

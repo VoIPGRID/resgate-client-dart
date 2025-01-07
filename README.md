@@ -8,12 +8,18 @@
 - react on collection add/remove events
 - react on model change events
 
+## Development
+
+- install Dart SDK from [dart.dev](https://dart.dev/get-dart)
+- install dependencies with `dart pub get`
+
 ## Example
 
 - see the [bin file](bin/resgate_client.dart) for now
-- run with `dart run` from the root project folder
+- install dependencies with `dart pub get`
+- run with `dart run bin/resgate_client.dart` from the root project folder
 
-## Todo
+## To do
 
 - timeout for sent messages, otherwise one might wait forever for a response that may never come
 - reconnect

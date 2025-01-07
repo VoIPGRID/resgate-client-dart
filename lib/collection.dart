@@ -41,7 +41,6 @@ class ResCollection<T extends ResModel> {
         final idx = msg["data"]["idx"];
         final data = msg["data"]["models"][rid];
         final model = _createModelFromJson(rid, data);
-
         _models.insert(idx, model);
         _addEventsController.add(model);
       },
@@ -53,7 +52,6 @@ class ResCollection<T extends ResModel> {
       (msg) {
         final idx = msg["data"]["idx"];
         final model = _models.removeAt(idx);
-
         model.destroy();
         _removeEventsController.add(model);
       },
@@ -61,7 +59,7 @@ class ResCollection<T extends ResModel> {
     );
   }
 
-  /// Execute [handler] everytime a model is added to this colletion.
+  /// Execute [handler] everytime a model is added to this collection.
   StreamSubscription onAdd(void Function(T) handler) {
     return _addEventsController.stream.listen((model) => handler(model));
   }
@@ -79,11 +77,17 @@ class ResCollection<T extends ResModel> {
     return model;
   }
 
-  /// Unsubscribe from this collection and close the event streams.
+  /// Unsubscribe from this collection and close the event streams
+  /// Also closes the event stream of each model within this collection.
   void destroy() {
     _client.send("unsubscribe", rid, null);
+
     _addEventsController.close();
     _removeEventsController.close();
+
+    for (var model in models) {
+      model.destroy();
+    }
   }
 
   /// Get a read-only list of the models within this collection.
