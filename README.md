@@ -13,6 +13,11 @@
 - install Dart SDK from [dart.dev](https://dart.dev/get-dart)
 - install dependencies with `dart pub get`
 
+## Running tests
+
+- (re)generate mocks with `dart run build_runner build`
+- run tests with `dart test`
+
 ## Example
 
 - see the [bin file](bin/resgate_client.dart) for now

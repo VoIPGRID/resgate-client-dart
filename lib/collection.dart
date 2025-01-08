@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:resgate_client/client.dart';
 import 'package:resgate_client/model.dart';
@@ -7,72 +8,73 @@ import 'package:resgate_client/model.dart';
 class ResCollection<T extends ResModel> {
   // Everytime the collection is updated an event is added to this stream.
   // This allows clients to add multiple listeners per collection.
-  final StreamController<T> _addEventsController = StreamController.broadcast();
-  final StreamController<T> _removeEventsController =
-      StreamController.broadcast();
+  StreamController<T> addEventsController = StreamController.broadcast();
+  StreamController<T> removeEventsController = StreamController.broadcast();
 
-  final ResClient _client;
-  final T Function() _modelFactory;
+  ResClient client;
+  String rid;
+  Map data;
+  T Function() modelFactory;
+
+  /// The internal list of models, this should not be accessed directly as the collection maintains this list.
+  /// For public use there is a read-only view of the list, see [models].
   final List<T> _models = [];
 
-  final String rid;
-  final Map data;
-
   ResCollection({
-    required ResClient client,
+    required this.client,
     required this.rid,
-    required T Function() modelFactory,
+    required this.modelFactory,
     required this.data,
-  })  : _client = client,
-        _modelFactory = modelFactory {
+    bool subscribe = true,
+  }) {
     // Go through the data of the collection and create instances for each model.
-    final List modelRids = data["collections"][rid];
-
-    for (var ridData in modelRids) {
-      final rid = ridData["rid"];
-      final modelData = data["models"][rid];
-      _models.add(_createModelFromJson(rid, modelData));
+    for (var collection in data["collections"][rid]) {
+      var rid = collection["rid"];
+      var model = data["models"][rid];
+      _models.add(createModelFromJson(rid, model));
     }
 
-    // Listen to add events for this collection.
-    _client.listen(
-      (msg) {
-        final rid = msg["data"]["value"]["rid"];
-        final idx = msg["data"]["idx"];
-        final data = msg["data"]["models"][rid];
-        final model = _createModelFromJson(rid, data);
-        _models.insert(idx, model);
-        _addEventsController.add(model);
-      },
-      filter: (msg) => msg["event"] == "$rid.add",
-    );
+    if (subscribe) {
+      // Listen to add events for this collection.
+      client.listen(
+        (msg) {
+          var rid = msg["data"]["value"]["rid"];
+          var idx = msg["data"]["idx"];
+          var data = msg["data"]["models"][rid];
+          var model = createModelFromJson(rid, data);
+          _models.insert(idx, model);
+          addEventsController.add(model);
+        },
+        filter: (msg) => msg["event"] == "$rid.add",
+      );
 
-    // Listen to remove events for this collection.
-    _client.listen(
-      (msg) {
-        final idx = msg["data"]["idx"];
-        final model = _models.removeAt(idx);
-        model.destroy();
-        _removeEventsController.add(model);
-      },
-      filter: (msg) => msg["event"] == "$rid.remove",
-    );
+      // Listen to remove events for this collection.
+      client.listen(
+        (msg) {
+          var idx = msg["data"]["idx"];
+          var model = _models.removeAt(idx);
+          model.destroy();
+          removeEventsController.add(model);
+        },
+        filter: (msg) => msg["event"] == "$rid.remove",
+      );
+    }
   }
 
   /// Execute [handler] everytime a model is added to this collection.
   StreamSubscription onAdd(void Function(T) handler) {
-    return _addEventsController.stream.listen((model) => handler(model));
+    return addEventsController.stream.listen((model) => handler(model));
   }
 
   /// Execute [handler] everytime a model is removed from the collection.
   StreamSubscription onRemove(void Function(T) handler) {
-    return _removeEventsController.stream.listen((model) => handler(model));
+    return removeEventsController.stream.listen((model) => handler(model));
   }
 
   /// Create an instance of a model, add it to the list and listen for events.
-  T _createModelFromJson(String rid, Map json) {
-    final model = _modelFactory();
-    model.init(_client, rid);
+  T createModelFromJson(String rid, Map json) {
+    var model = modelFactory();
+    model.init(client, rid);
     model.updateFromJson(json);
     return model;
   }
@@ -80,10 +82,10 @@ class ResCollection<T extends ResModel> {
   /// Unsubscribe from this collection and close the event streams
   /// Also closes the event stream of each model within this collection.
   void destroy() {
-    _client.send("unsubscribe", rid, null);
+    client.send("unsubscribe", rid, null);
 
-    _addEventsController.close();
-    _removeEventsController.close();
+    addEventsController.close();
+    removeEventsController.close();
 
     for (var model in models) {
       model.destroy();

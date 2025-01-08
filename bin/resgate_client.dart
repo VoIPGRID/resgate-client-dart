@@ -13,8 +13,9 @@ class QueueModel extends ResModel {
 }
 
 void main() async {
-  final client =
-      ResClient('wss://frontend-resgate-mocking.eu-staging.holodeck.voys.nl');
+  var client = ResClient();
+
+  client.connect('wss://frontend-resgate-mocking.eu-staging.holodeck.voys.nl');
 
   // You need to authenticate in order to subscribe.
   // Try commenting this out to see an access denied error.
@@ -28,7 +29,7 @@ void main() async {
   // Subscribe to a subject, supply the model factory so that each model
   // can be updated on a change event. Hence this model should extend ResModel
   // and implement the `updateFromJson` method.
-  final collection = await client.getCollection(
+  var collection = await client.getCollection(
       "dashboard.client.abc-123", () => QueueModel());
 
   // React when a model is added or removed from a collection.
@@ -36,7 +37,7 @@ void main() async {
   collection.onRemove(print);
 
   // A collection holds an internal list of models that can be read.
-  final model = collection.models[2];
+  var model = collection.models[2];
 
   // React when a model updates.
   model.onChange((values) {

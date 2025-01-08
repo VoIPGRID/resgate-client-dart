@@ -5,29 +5,23 @@ import 'package:resgate_client/client.dart';
 abstract class ResModel {
   // Everytime the model is updated an event is added to this stream.
   // This allows clients to add multiple listeners per model.
-  final StreamController<Map> _changeEventsController =
-      StreamController.broadcast();
+  StreamController<Map> changeEventsController = StreamController.broadcast();
 
   // Use late initialization for these properties so it is easier for the
-  // clients to create their own models.
-  late final ResClient _client;
-  late final StreamSubscription _changeListener;
-  late final String rid;
+  // developers that use this package to create their own models.
+  late ResClient client;
+  late StreamSubscription changeListener;
+  late String rid;
 
   /// Initialize the model and start listening for events.
   init(ResClient client, String rid) {
-    _client = client;
+    this.client = client;
     this.rid = rid;
-    _listen();
-  }
-
-  /// Listen for events and broadcast them to those listening to this model.
-  _listen() {
-    _changeListener = _client.listen(
+    changeListener = client.listen(
       (msg) {
-        final updatedValues = msg["data"]["values"];
+        var updatedValues = msg["data"]["values"];
         updateFromJson(updatedValues);
-        _changeEventsController.add(updatedValues);
+        changeEventsController.add(updatedValues);
       },
       filter: (msg) => msg["event"] == "$rid.change",
     );
@@ -35,16 +29,16 @@ abstract class ResModel {
 
   /// Execute [handler] everytime this model receives an update (change event).
   StreamSubscription onChange(void Function(Map) handler) {
-    return _changeEventsController.stream.listen((values) => handler(values));
+    return changeEventsController.stream.listen((values) => handler(values));
   }
 
   /// Close the event stream and stop listening for changes.
   void destroy() {
-    _changeEventsController.close();
-    _changeListener.cancel();
+    changeEventsController.close();
+    changeListener.cancel();
   }
 
   /// Update the data of this model using the [json] data.
-  /// NOTE: only updated values are available in the [json] data.
+  /// NOTE: only the updated values are available in the [json] data.
   void updateFromJson(Map json);
 }
