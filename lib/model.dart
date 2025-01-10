@@ -8,15 +8,14 @@ abstract class ResModel {
   StreamController<Map> changeEventsController = StreamController.broadcast();
 
   // Use late initialization for these properties so it is easier for the
-  // developers that use this package to create their own models.
+  // developers that use this abstract class to inherit from for their own models.
+  // As these properties are initialized by the collection they are part of.
   late ResClient client;
   late StreamSubscription changeListener;
   late String rid;
 
-  /// Initialize the model and start listening for events.
-  init(ResClient client, String rid) {
-    this.client = client;
-    this.rid = rid;
+  /// Listen to change events for this model.
+  void listen() {
     changeListener = client.listen(
       (msg) {
         var updatedValues = msg["data"]["values"];

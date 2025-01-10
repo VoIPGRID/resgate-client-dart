@@ -4,25 +4,20 @@ import 'dart:convert';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:resgate_client/client.dart';
-import 'package:resgate_client/collection.dart';
 import 'package:resgate_client/exceptions.dart';
 import 'package:resgate_client/model.dart';
 import 'package:test/test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import 'utils.dart';
 
 @GenerateNiceMocks([
   MockSpec<WebSocketChannel>(),
   MockSpec<WebSocketSink>(),
-  MockSpec<Stream>()
+  MockSpec<Stream>(),
+  MockSpec<ResModel>()
 ])
 import 'client_test.mocks.dart';
-import 'utils.dart';
-
-class TestModel extends ResModel {
-  @override
-  void updateFromJson(Map json) {}
-}
 
 void main() {
   late WebSocketChannel mockChannel;
@@ -101,15 +96,15 @@ void main() {
       yield jsonEncode(message);
     });
 
-    modelFactory() => TestModel();
+    modelFactory() => MockResModel();
 
     var collection =
         await client.getCollection("example.collection.1", modelFactory);
 
     expect(collection.client, equals(client));
     expect(collection.rid, equals("example.collection.1"));
-    expect(collection.models.length, equals(1));
     expect(collection.modelFactory, equals(modelFactory));
+    expect(collection.models.length, equals(1));
   });
 
   test(
@@ -200,9 +195,9 @@ void main() {
     });
 
     var sub = client.listen((msg) {
-      expect(msg, isNot(equals({"id": 1, "event": "add"})));
-      expect(msg, isNot(equals({"id": 3, "event": "remove"})));
-      expect(msg, equals({"id": 2, "event": "change"}));
+      expect(msg, isNot(equals(addEventMessage)));
+      expect(msg, isNot(equals(removeEventMessage)));
+      expect(msg, equals(changeEventMessage));
     }, filter: (msg) => msg["event"] == "change");
 
     expect(sub.asFuture(), completes);

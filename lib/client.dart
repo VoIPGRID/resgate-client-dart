@@ -20,7 +20,7 @@ class ResClient {
   int currentId = 1;
 
   /// Connect to the given Resgate server.
-  connect(String url) {
+  void connect(String url) {
     channel = WebSocketChannel.connect(Uri.parse(url));
     stream = channel.stream.asBroadcastStream();
   }
@@ -32,12 +32,14 @@ class ResClient {
       String rid, T Function() modelFactory) async {
     var id = await send("subscribe", rid, null);
     var json = await receive(id);
-    return ResCollection(
+    var collection = ResCollection(
       client: this,
       rid: rid,
-      data: json["result"],
       modelFactory: modelFactory,
     );
+    collection.addModelsFromJson(json["result"]);
+    collection.listen();
+    return collection;
   }
 
   /// Send the credentials so it can be stored on this connection.
