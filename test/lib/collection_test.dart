@@ -26,14 +26,18 @@ void main() {
   late Stream mockStream;
   late StreamController<MockResModel> mockAddEventsController;
   late StreamController<MockResModel> mockRemoveEventsController;
+  late StreamSubscription mockAddListener;
+  late StreamSubscription mockRemoveListener;
   late ResClient client;
 
   setUp(() {
     mockChannel = MockWebSocketChannel();
     mockSink = MockWebSocketSink();
     mockStream = MockStream();
-    mockAddEventsController = MockStreamController();
-    mockRemoveEventsController = MockStreamController();
+    mockAddEventsController = MockStreamController<MockResModel>();
+    mockRemoveEventsController = MockStreamController<MockResModel>();
+    mockAddListener = MockStreamSubscription();
+    mockRemoveListener = MockStreamSubscription();
 
     when(mockChannel.sink).thenReturn(mockSink);
 
@@ -119,6 +123,7 @@ void main() {
       "models": {"example.model.1": {}}
     })));
 
+    // Save the reference to the model as the remove event will also remove it from the collection's list.
     var model = collection.models[0];
 
     collection.listen();
@@ -137,12 +142,6 @@ void main() {
       () async {
     modelFactory() => MockResModel();
 
-    var mockAddEventsController = MockStreamController<MockResModel>();
-    var mockRemoveEventsController = MockStreamController<MockResModel>();
-
-    var mockAddListener = MockStreamSubscription();
-    var mockRemoveListener = MockStreamSubscription();
-
     var collection = ResCollection(
       client: client,
       rid: "example.collection.1",
@@ -156,9 +155,12 @@ void main() {
 
     collection.models.add(modelFactory());
 
+    // Clone the list as the original collection's list will be cleared by collection.destroy().
+    var models = [...collection.models];
+
     await collection.destroy();
 
-    for (var model in collection.models) {
+    for (var model in models) {
       verify(model.destroy()).called(1);
     }
 
@@ -166,7 +168,6 @@ void main() {
 
     verify(mockAddEventsController.close()).called(1);
     verify(mockRemoveEventsController.close()).called(1);
-
     verify(mockAddListener.cancel()).called(1);
     verify(mockRemoveListener.cancel()).called(1);
 
