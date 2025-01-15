@@ -24,12 +24,16 @@ void main() {
   late WebSocketChannel mockChannel;
   late WebSocketSink mockSink;
   late Stream mockStream;
+  late StreamController<MockResModel> mockAddEventsController;
+  late StreamController<MockResModel> mockRemoveEventsController;
   late ResClient client;
 
   setUp(() {
     mockChannel = MockWebSocketChannel();
     mockSink = MockWebSocketSink();
     mockStream = MockStream();
+    mockAddEventsController = MockStreamController();
+    mockRemoveEventsController = MockStreamController();
 
     when(mockChannel.sink).thenReturn(mockSink);
 
@@ -39,7 +43,7 @@ void main() {
   });
 
   test(
-      'ResCollection listens to add events and adds the corresponding model to its list',
+      'ResCollection listens to add events and adds the corresponding model to its list and broadcasts an event for it',
       () async {
     Map addEventMessage = {
       "id": 2,
@@ -63,6 +67,7 @@ void main() {
       modelFactory: modelFactory,
     );
 
+    collection.addEventsController = mockAddEventsController;
     collection.addModelsFromJson({
       "collections": {
         "example.collection.1": [
@@ -75,6 +80,8 @@ void main() {
     collection.listen();
     await collection.addListener.asFuture();
 
+    verify(mockAddEventsController.add(collection.models[1])).called(1);
+
     expect(collection.client, equals(client));
     expect(collection.rid, equals("example.collection.1"));
     expect(collection.modelFactory, equals(modelFactory));
@@ -82,7 +89,7 @@ void main() {
   });
 
   test(
-      'ResCollection listens to remove events and removes the corresponding model from its list',
+      'ResCollection listens to remove events and removes the corresponding model from its list and broadcasts an event for it',
       () async {
     Map removeEventMessage = {
       "id": 2,
@@ -102,6 +109,7 @@ void main() {
       modelFactory: modelFactory,
     );
 
+    collection.removeEventsController = mockRemoveEventsController;
     collection.addModelsFromJson({
       "collections": {
         "example.collection.1": [
@@ -111,8 +119,12 @@ void main() {
       "models": {"example.model.1": {}}
     });
 
+    var model = collection.models[0];
+
     collection.listen();
     await collection.removeListener.asFuture();
+
+    verify(mockRemoveEventsController.add(model)).called(1);
 
     expect(collection.client, equals(client));
     expect(collection.rid, equals("example.collection.1"));
@@ -147,16 +159,16 @@ void main() {
     await collection.destroy();
 
     for (var model in collection.models) {
-      verify(model.destroy());
+      verify(model.destroy()).called(1);
     }
 
     expect(collection.models.length, equals(0));
 
-    verify(mockAddEventsController.close());
-    verify(mockRemoveEventsController.close());
+    verify(mockAddEventsController.close()).called(1);
+    verify(mockRemoveEventsController.close()).called(1);
 
-    verify(mockAddListener.cancel());
-    verify(mockRemoveListener.cancel());
+    verify(mockAddListener.cancel()).called(1);
+    verify(mockRemoveListener.cancel()).called(1);
 
     Map expectedMessage = {
       "id": 1,
