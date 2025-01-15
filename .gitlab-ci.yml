@@ -1,0 +1,6 @@
+test:
+  image: dart:latest
+  before_script:
+    - dart pub get
+  script:
+    - dart test
