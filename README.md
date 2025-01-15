@@ -20,9 +20,9 @@
 
 ## Example
 
-- see the [bin file](bin/resgate_client.dart) for now
+- see the [example file](example/example.dart) for now
 - install dependencies with `dart pub get`
-- run with `dart run bin/resgate_client.dart` from the root project folder
+- run with `dart run example/example.dart` from the root project folder
 
 ## To do
 
