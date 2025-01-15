@@ -5,7 +5,8 @@ import 'client.dart';
 abstract class ResModel {
   // Everytime the model is updated an event is added to this stream.
   // This allows clients to add multiple listeners per model.
-  StreamController<Map<String, dynamic>> changeEventsController = StreamController.broadcast();
+  StreamController<Map<String, dynamic>> changeEventsController =
+      StreamController.broadcast();
 
   // Use late initialization for these properties so it is easier for the
   // developers that use this abstract class to inherit from for their own models.

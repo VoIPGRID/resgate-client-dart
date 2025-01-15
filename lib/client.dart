@@ -46,7 +46,9 @@ class ResClient {
 
   /// Send the credentials so it can be stored on this connection.
   Future<Map<String, dynamic>> authenticate(
-      String rid, Map<String, dynamic> params,) async {
+    String rid,
+    Map<String, dynamic> params,
+  ) async {
     var id = await send("auth", rid, params);
     return await receive(id);
   }
@@ -59,7 +61,10 @@ class ResClient {
 
   /// Publish a Resgate message on the websocket channel.
   Future<int> send(
-      String type, String? rid, Map<String, dynamic>? params,) async {
+    String type,
+    String? rid,
+    Map<String, dynamic>? params,
+  ) async {
     var id = currentId++;
 
     Map<String, dynamic> msg = {
@@ -91,7 +96,8 @@ class ResClient {
     late StreamSubscription<dynamic> sub;
 
     sub = stream.listen((msg) {
-      Map<String, dynamic> json = jsonDecode(msg as String) as Map<String, dynamic>;
+      Map<String, dynamic> json =
+          jsonDecode(msg as String) as Map<String, dynamic>;
 
       if (json["id"] == id) {
         // Cancel the subscription as we only want to receive this one specific message.
@@ -115,7 +121,8 @@ class ResClient {
     bool Function(Map<String, dynamic>)? filter,
   }) {
     return stream.listen((msg) {
-      Map<String, dynamic> json = jsonDecode(msg as String) as Map<String, dynamic>;
+      Map<String, dynamic> json =
+          jsonDecode(msg as String) as Map<String, dynamic>;
 
       if (filter != null) {
         if (filter(json)) {
