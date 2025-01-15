@@ -9,8 +9,8 @@ class ResCollection<T extends ResModel> {
   StreamController<T> addEventsController = StreamController.broadcast();
   StreamController<T> removeEventsController = StreamController.broadcast();
 
-  late StreamSubscription addListener;
-  late StreamSubscription removeListener;
+  late StreamSubscription<dynamic> addListener;
+  late StreamSubscription<dynamic> removeListener;
 
   ResClient client;
   String rid;
@@ -27,9 +27,9 @@ class ResCollection<T extends ResModel> {
   void listen() {
     addListener = client.listen(
       (msg) {
-        var rid = msg["data"]["value"]["rid"];
-        var idx = msg["data"]["idx"];
-        var data = msg["data"]["models"][rid];
+        var rid = msg["data"]["value"]["rid"] as String;
+        var idx = msg["data"]["idx"] as int;
+        var data = msg["data"]["models"][rid] as Map<String, dynamic>;
         var model = createModelFromJson(rid, data);
         models.insert(idx, model);
         addEventsController.add(model);
@@ -39,7 +39,7 @@ class ResCollection<T extends ResModel> {
 
     removeListener = client.listen(
       (msg) {
-        var idx = msg["data"]["idx"];
+        var idx = msg["data"]["idx"] as int;
         var model = models.removeAt(idx);
         model.destroy();
         removeEventsController.add(model);
@@ -49,21 +49,21 @@ class ResCollection<T extends ResModel> {
   }
 
   /// Execute [handler] everytime a model is added to this collection.
-  StreamSubscription onAdd(void Function(T) handler) {
+  StreamSubscription<T> onAdd(void Function(T) handler) {
     return addEventsController.stream.listen((model) => handler(model));
   }
 
   /// Execute [handler] everytime a model is removed from the collection.
-  StreamSubscription onRemove(void Function(T) handler) {
+  StreamSubscription<T> onRemove(void Function(T) handler) {
     return removeEventsController.stream.listen((model) => handler(model));
   }
 
   /// Go through the data and create instances for each model and add them to the internal list.
   /// Also listens for change events for each created model.
   void addModelsFromJson(Map<String, dynamic> data) {
-    for (var collection in data["collections"][rid]) {
-      var rid = collection["rid"];
-      var model = (data["models"][rid]);
+    for (var collection in data["collections"][rid] as Iterable) {
+      var rid = collection["rid"] as String;
+      var model = (data["models"][rid]) as Map<String, dynamic>;
       var instance = createModelFromJson(rid, model);
       models.add(instance);
     }
@@ -81,7 +81,7 @@ class ResCollection<T extends ResModel> {
 
   /// Unsubscribe from this collection and close the event streams
   /// Also closes the event stream of each model within this collection.
-  Future destroy() {
+  Future<void> destroy() {
     var future = client.send("unsubscribe", rid, null);
 
     addEventsController.close();

@@ -3,15 +3,15 @@ class ResException implements Exception {
 
   ResException(this.data);
 
-  get id {
+  dynamic get id {
     return data["id"];
   }
 
-  get message {
+  dynamic get message {
     return data["error"]["message"];
   }
 
-  get code {
+  dynamic get code {
     return data["error"]["code"];
   }
 

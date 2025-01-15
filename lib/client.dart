@@ -13,7 +13,7 @@ class ResClient {
   /// We need a broadcast stream here as we want a temporary listener per
   /// message sent. As we can send message in an async manner we might have more
   /// than one listener at a time.
-  late Stream stream;
+  late Stream<dynamic> stream;
 
   /// The ID of the message and the response are the same, that's how we can
   /// figure out which response corresponds to which sent message.
@@ -29,7 +29,9 @@ class ResClient {
   /// The collection will automatically listen for changes to the collection (add and remove).
   /// Additionally, the collection will listen for changes to each model in the collection.
   Future<ResCollection<T>> getCollection<T extends ResModel>(
-      String rid, T Function() modelFactory) async {
+    String rid,
+    T Function() modelFactory,
+  ) async {
     var id = await send("subscribe", rid, null);
     var json = await receive(id);
     var collection = ResCollection(
@@ -37,13 +39,14 @@ class ResClient {
       rid: rid,
       modelFactory: modelFactory,
     );
-    collection.addModelsFromJson(json["result"]);
+    collection.addModelsFromJson(json["result"] as Map<String, dynamic>);
     collection.listen();
     return collection;
   }
 
   /// Send the credentials so it can be stored on this connection.
-  Future<Map<String, dynamic>> authenticate(String rid, Map<String, dynamic> params) async {
+  Future<Map<String, dynamic>> authenticate(
+      String rid, Map<String, dynamic> params,) async {
     var id = await send("auth", rid, params);
     return await receive(id);
   }
@@ -55,7 +58,8 @@ class ResClient {
   }
 
   /// Publish a Resgate message on the websocket channel.
-  Future<int> send(String type, String? rid, Map<String, dynamic>? params) async {
+  Future<int> send(
+      String type, String? rid, Map<String, dynamic>? params,) async {
     var id = currentId++;
 
     Map<String, dynamic> msg = {
@@ -84,10 +88,10 @@ class ResClient {
     var completer = Completer<Map<String, dynamic>>();
 
     // Create a one-shot subscription to the stream to receive the response.
-    late StreamSubscription sub;
+    late StreamSubscription<dynamic> sub;
 
     sub = stream.listen((msg) {
-      Map<String, dynamic> json = jsonDecode(msg);
+      Map<String, dynamic> json = jsonDecode(msg as String) as Map<String, dynamic>;
 
       if (json["id"] == id) {
         // Cancel the subscription as we only want to receive this one specific message.
@@ -106,12 +110,12 @@ class ResClient {
 
   /// Listen in on the stream, executing the handler for each message.
   /// Optionally filtering the messages that the handler is executed on.
-  StreamSubscription listen(
-    Function(Map<String, dynamic>) handler, {
+  StreamSubscription<dynamic> listen(
+    void Function(Map<String, dynamic>) handler, {
     bool Function(Map<String, dynamic>)? filter,
   }) {
     return stream.listen((msg) {
-      Map<String, dynamic> json = jsonDecode(msg);
+      Map<String, dynamic> json = jsonDecode(msg as String) as Map<String, dynamic>;
 
       if (filter != null) {
         if (filter(json)) {

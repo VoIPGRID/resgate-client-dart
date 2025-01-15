@@ -18,7 +18,7 @@ abstract class ResModel {
   void listen() {
     changeListener = client.listen(
       (msg) {
-        var updatedValues = msg["data"]["values"];
+        var updatedValues = msg["data"]["values"] as Map<String, dynamic>;
         updateFromJson(updatedValues);
         changeEventsController.add(updatedValues);
       },
