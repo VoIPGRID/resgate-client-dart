@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:resgate_client/client.dart';
+import 'client.dart';
 
 abstract class ResModel {
   // Everytime the model is updated an event is added to this stream.

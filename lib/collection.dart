@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:resgate_client/client.dart';
-import 'package:resgate_client/model.dart';
+import 'client.dart';
+import 'model.dart';
 
 class ResCollection<T extends ResModel> {
   // Everytime the collection is updated an event is added to this stream.
