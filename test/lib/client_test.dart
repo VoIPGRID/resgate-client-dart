@@ -50,7 +50,7 @@ void main() {
   test(
       'ResClient.send() sends the message over the websocket as json encoded data',
       () async {
-    Map expectedMessage = {
+    Map<String, dynamic> expectedMessage = {
       "id": 1,
       "method": "method.rid",
     };
@@ -64,7 +64,7 @@ void main() {
   test(
       'ResClient.send() sends the message over the websocket as json encoded data (with optional params)',
       () async {
-    Map expectedMessage = {
+    Map<String, dynamic> expectedMessage = {
       "id": 1,
       "method": "method.rid",
       "params": {"key": "value"},
@@ -79,7 +79,7 @@ void main() {
   test(
       'ResClient.getCollection() parses the Resgate message into a ResCollection',
       () async {
-    Map message = {
+    Map<String, dynamic> message = {
       "id": 1,
       "rid": "example.collection.1",
       "result": {
@@ -110,11 +110,11 @@ void main() {
   test(
       'ResClient.receive() resolves when the message with the given id is received',
       () async {
-    Map firstMessage = {
+    Map<String, dynamic> firstMessage = {
       "id": 1,
     };
 
-    Map expectedSecondMessage = {
+    Map<String, dynamic> expectedSecondMessage = {
       "id": 2,
       "result": {
         "data": {
@@ -126,7 +126,7 @@ void main() {
       },
     };
 
-    Map thirdMessage = {
+    Map<String, dynamic> thirdMessage = {
       "id": 3,
     };
 
@@ -146,7 +146,7 @@ void main() {
   test(
       'ResClient.receive() throws an exception for an error message is received from the Resgate server',
       () async {
-    Map errorMessage = {
+    Map<String, dynamic> errorMessage = {
       "id": 1,
       "error": {
         "message": "error message",
@@ -164,7 +164,7 @@ void main() {
           error.toString(),
           equals(
               "Resgate error for websocket message with id: 1 -> error message (404)"));
-      return {};
+      return <String, dynamic>{};
     });
 
     expect(future, completes);
@@ -173,17 +173,17 @@ void main() {
   test(
       'ResClient.listen() executes the handler for each message that matches the filter',
       () async {
-    Map addEventMessage = {
+    Map<String, dynamic> addEventMessage = {
       "id": 1,
       "event": "add",
     };
 
-    Map changeEventMessage = {
+    Map<String, dynamic> changeEventMessage = {
       "id": 2,
       "event": "change",
     };
 
-    Map removeEventMessage = {
+    Map<String, dynamic> removeEventMessage = {
       "id": 3,
       "event": "remove",
     };

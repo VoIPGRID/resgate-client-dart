@@ -5,7 +5,7 @@ class QueueModel extends ResModel {
   int waitingCallers = 0;
 
   @override
-  void updateFromJson(Map json) {
+  void updateFromJson(Map<String, dynamic> json) {
     if (json.containsKey("waiting_callers")) {
       waitingCallers = json["waiting_callers"];
     }

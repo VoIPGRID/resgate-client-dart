@@ -1,5 +1,5 @@
 class ResException implements Exception {
-  Map data;
+  Map<String, dynamic> data;
 
   ResException(this.data);
 

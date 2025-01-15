@@ -60,16 +60,17 @@ class ResCollection<T extends ResModel> {
 
   /// Go through the data and create instances for each model and add them to the internal list.
   /// Also listens for change events for each created model.
-  void addModelsFromJson(Map data) {
+  void addModelsFromJson(Map<String, dynamic> data) {
     for (var collection in data["collections"][rid]) {
       var rid = collection["rid"];
-      var model = data["models"][rid];
-      models.add(createModelFromJson(rid, model));
+      var model = (data["models"][rid]);
+      var instance = createModelFromJson(rid, model);
+      models.add(instance);
     }
   }
 
   /// Create an instance of a model and listen for its change events.
-  T createModelFromJson(String rid, Map json) {
+  T createModelFromJson(String rid, Map<String, dynamic> json) {
     var model = modelFactory();
     model.client = client;
     model.rid = rid;

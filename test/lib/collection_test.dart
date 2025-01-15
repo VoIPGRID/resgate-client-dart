@@ -45,7 +45,7 @@ void main() {
   test(
       'ResCollection listens to add events and adds the corresponding model to its list and broadcasts an event for it',
       () async {
-    Map addEventMessage = {
+    Map<String, dynamic> addEventMessage = {
       "id": 2,
       "event": "example.collection.1.add",
       "data": {
@@ -68,14 +68,14 @@ void main() {
     );
 
     collection.addEventsController = mockAddEventsController;
-    collection.addModelsFromJson({
+    collection.addModelsFromJson(jsonDecode(jsonEncode({
       "collections": {
         "example.collection.1": [
           {"rid": "example.model.1"}
         ]
       },
       "models": {"example.model.1": {}}
-    });
+    })));
 
     collection.listen();
     await collection.addListener.asFuture();
@@ -91,7 +91,7 @@ void main() {
   test(
       'ResCollection listens to remove events and removes the corresponding model from its list and broadcasts an event for it',
       () async {
-    Map removeEventMessage = {
+    Map<String, dynamic> removeEventMessage = {
       "id": 2,
       "event": "example.collection.1.remove",
       "data": {"idx": 0}
@@ -110,14 +110,14 @@ void main() {
     );
 
     collection.removeEventsController = mockRemoveEventsController;
-    collection.addModelsFromJson({
+    collection.addModelsFromJson(jsonDecode(jsonEncode({
       "collections": {
         "example.collection.1": [
           {"rid": "example.model.1"}
         ]
       },
       "models": {"example.model.1": {}}
-    });
+    })));
 
     var model = collection.models[0];
 
@@ -170,7 +170,7 @@ void main() {
     verify(mockAddListener.cancel()).called(1);
     verify(mockRemoveListener.cancel()).called(1);
 
-    Map expectedMessage = {
+    Map<String, dynamic> expectedMessage = {
       "id": 1,
       "method": "unsubscribe.example.collection.1",
     };

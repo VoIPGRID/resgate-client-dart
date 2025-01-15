@@ -43,22 +43,22 @@ class ResClient {
   }
 
   /// Send the credentials so it can be stored on this connection.
-  Future<Map> authenticate(String rid, Map params) async {
+  Future<Map<String, dynamic>> authenticate(String rid, Map<String, dynamic> params) async {
     var id = await send("auth", rid, params);
     return await receive(id);
   }
 
   /// Requests the RES protocol version of the Resgate server.
-  Future<Map> version() async {
+  Future<Map<String, dynamic>> version() async {
     var id = await send("version", null, {"protocol": "1.2.1"});
     return await receive(id);
   }
 
   /// Publish a Resgate message on the websocket channel.
-  Future<int> send(String type, String? rid, Map? params) async {
+  Future<int> send(String type, String? rid, Map<String, dynamic>? params) async {
     var id = currentId++;
 
-    Map msg = {
+    Map<String, dynamic> msg = {
       "id": id,
     };
 
@@ -80,14 +80,14 @@ class ResClient {
   }
 
   /// Wait for a response that has the given id, which matches with the sent message.
-  Future<Map> receive(int id) {
-    var completer = Completer<Map>();
+  Future<Map<String, dynamic>> receive(int id) {
+    var completer = Completer<Map<String, dynamic>>();
 
     // Create a one-shot subscription to the stream to receive the response.
     late StreamSubscription sub;
 
     sub = stream.listen((msg) {
-      Map json = jsonDecode(msg);
+      Map<String, dynamic> json = jsonDecode(msg);
 
       if (json["id"] == id) {
         // Cancel the subscription as we only want to receive this one specific message.
@@ -107,11 +107,11 @@ class ResClient {
   /// Listen in on the stream, executing the handler for each message.
   /// Optionally filtering the messages that the handler is executed on.
   StreamSubscription listen(
-    Function(Map) handler, {
-    bool Function(Map)? filter,
+    Function(Map<String, dynamic>) handler, {
+    bool Function(Map<String, dynamic>)? filter,
   }) {
     return stream.listen((msg) {
-      Map json = jsonDecode(msg);
+      Map<String, dynamic> json = jsonDecode(msg);
 
       if (filter != null) {
         if (filter(json)) {

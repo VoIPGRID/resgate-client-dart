@@ -5,7 +5,7 @@ import 'package:resgate_client/client.dart';
 abstract class ResModel {
   // Everytime the model is updated an event is added to this stream.
   // This allows clients to add multiple listeners per model.
-  StreamController<Map> changeEventsController = StreamController.broadcast();
+  StreamController<Map<String, dynamic>> changeEventsController = StreamController.broadcast();
 
   // Use late initialization for these properties so it is easier for the
   // developers that use this abstract class to inherit from for their own models.
@@ -27,7 +27,7 @@ abstract class ResModel {
   }
 
   /// Execute [handler] everytime this model receives an update (change event).
-  StreamSubscription onChange(void Function(Map) handler) {
+  StreamSubscription onChange(void Function(Map<String, dynamic>) handler) {
     return changeEventsController.stream.listen((values) => handler(values));
   }
 
@@ -39,5 +39,5 @@ abstract class ResModel {
 
   /// Update the data of this model using the [json] data.
   /// NOTE: only the updated values are available in the [json] data.
-  void updateFromJson(Map json);
+  void updateFromJson(Map<String, dynamic> json);
 }
