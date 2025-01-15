@@ -9,7 +9,7 @@ import 'package:resgate_client/model.dart';
 import 'package:test/test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
-import 'utils.dart';
+import './utils.dart';
 
 @GenerateNiceMocks([
   MockSpec<WebSocketChannel>(),
@@ -17,7 +17,7 @@ import 'utils.dart';
   MockSpec<Stream>(),
   MockSpec<ResModel>()
 ])
-import 'client_test.mocks.dart';
+import './client_test.mocks.dart';
 
 void main() {
   late WebSocketChannel mockChannel;

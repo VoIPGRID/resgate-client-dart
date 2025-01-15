@@ -7,7 +7,7 @@ import 'package:resgate_client/client.dart';
 import 'package:resgate_client/model.dart';
 import 'package:test/test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'utils.dart';
+import './utils.dart';
 
 @GenerateNiceMocks([
   MockSpec<WebSocketChannel>(),
@@ -16,7 +16,7 @@ import 'utils.dart';
   MockSpec<StreamController>(),
   MockSpec<StreamSubscription>(),
 ])
-import 'model_test.mocks.dart';
+import './model_test.mocks.dart';
 
 class TestModel extends ResModel {
   int counter = 0;
