@@ -50,7 +50,7 @@ void main() {
       'ResCollection listens to add events and adds the corresponding model to its list and broadcasts an event for it',
       () async {
     Map<String, dynamic> addEventMessage = {
-      "id": 2,
+      "id": 1,
       "event": "example.collection.1.add",
       "data": {
         "idx": 1,
@@ -96,7 +96,7 @@ void main() {
       'ResCollection listens to remove events and removes the corresponding model from its list and broadcasts an event for it',
       () async {
     Map<String, dynamic> removeEventMessage = {
-      "id": 2,
+      "id": 1,
       "event": "example.collection.1.remove",
       "data": {"idx": 0}
     };
