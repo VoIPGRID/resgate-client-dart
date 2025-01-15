@@ -83,7 +83,7 @@ void main() {
   });
 
   test('ResModel.destroy() closes streams and removes listeners', () async {
-    model.destroy();
+    await model.destroy();
 
     verify(mockChangeEventsController.close()).called(1);
     verify(mockChangeListener.cancel()).called(1);

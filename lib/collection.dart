@@ -81,21 +81,19 @@ class ResCollection<T extends ResModel> {
 
   /// Unsubscribe from this collection and close the event streams
   /// Also closes the event stream of each model within this collection.
-  Future<void> destroy() {
-    var future = client.send("unsubscribe", rid, null);
+  Future<void> destroy() async {
+    await client.send("unsubscribe", rid, null);
 
-    addEventsController.close();
-    removeEventsController.close();
+    await addEventsController.close();
+    await removeEventsController.close();
 
-    addListener.cancel();
-    removeListener.cancel();
+    await addListener.cancel();
+    await removeListener.cancel();
 
     for (var model in models) {
-      model.destroy();
+      await model.destroy();
     }
 
     models.clear();
-
-    return future;
   }
 }

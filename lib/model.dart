@@ -32,9 +32,9 @@ abstract class ResModel {
   }
 
   /// Close the event stream and stop listening for changes.
-  void destroy() {
-    changeEventsController.close();
-    changeListener.cancel();
+  Future<void> destroy() async {
+    await changeEventsController.close();
+    await changeListener.cancel();
   }
 
   /// Update the data of this model using the [json] data.
