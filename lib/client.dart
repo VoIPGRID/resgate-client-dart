@@ -136,6 +136,6 @@ class ResClient {
 
   /// Close the websocket connection.
   Future<void> destroy() async {
-    await channel.sink.close(status.goingAway);
+    await channel.sink.close(status.normalClosure);
   }
 }

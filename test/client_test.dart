@@ -205,6 +205,6 @@ void main() {
 
   test('ResClient.destroy() stops the websocket connection', () {
     client.destroy();
-    verify(mockSink.close(status.goingAway)).called(1);
+    verify(mockSink.close(status.normalClosure)).called(1);
   });
 }
