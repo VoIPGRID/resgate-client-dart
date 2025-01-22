@@ -1,6 +1,6 @@
 name: resgate_client
 description: A client for Resgate.
-version: 1.0.1
+version: 1.0.2
 
 environment:
   sdk: ^3.5.0
