@@ -3,7 +3,7 @@ description: A client for Resgate.
 version: 1.0.1
 
 environment:
-  sdk: ^3.5.3
+  sdk: ^3.5.0
 
 dependencies:
   web_socket_channel: ^3.0.0
