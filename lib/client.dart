@@ -49,9 +49,10 @@ class ResClient {
     String rid,
     Map<String, dynamic> params,
   ) async {
-    await _version();
     var id = await send("auth", rid, params);
-    return await receive(id);
+    final response = await receive(id);
+    await _version();
+    return response;
   }
 
   /// Requests the RES protocol version of the Resgate server.
