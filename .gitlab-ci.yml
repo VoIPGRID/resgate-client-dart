@@ -1,7 +1,35 @@
-test:
-  image: dart:latest
+stages:
+  - format
+  - analyze
+  - test
+
+.base:
+  image: ghcr.io/cirruslabs/flutter:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   before_script:
     - dart pub get
-    - dart run build_runner build
+    - dart run build_runner build --delete-conflicting-outputs
+
+format:
+  extends: .base
+  stage: format
   script:
-    - dart test
+    - dart format . --output=none --set-exit-if-changed
+
+analyze:
+  extends: .base
+  stage: analyze
+  script:
+    - dart analyze --fatal-infos
+
+tests:
+  extends: .base
+  stage: test
+  script:
+    - dart pub global activate junitreport
+    - dart test --reporter json | dart pub global run junitreport:tojunit > test-results.xml
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
