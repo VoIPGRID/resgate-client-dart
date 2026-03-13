@@ -2,6 +2,7 @@ stages:
   - format
   - analyze
   - test
+  - integration-test
 
 .base:
   image: ghcr.io/cirruslabs/flutter:latest
@@ -29,6 +30,33 @@ tests:
   script:
     - dart pub global activate junitreport
     - dart test --reporter json | dart pub global run junitreport:tojunit > test-results.xml
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
+
+.voys-tests-base:
+  extends: .base
+  stage: integration-test
+  script:
+    - ./run_voys_tests.sh
+
+voys-tests:
+  extends: .voys-tests-base
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
+
+voys-tests-long:
+  extends: .voys-tests-base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true
+  variables:
+    RUN_LONG_TESTS: "true"
+  timeout: 2 hours
   artifacts:
     when: always
     reports:
