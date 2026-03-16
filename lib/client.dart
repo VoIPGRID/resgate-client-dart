@@ -39,8 +39,12 @@ class ResClient {
   Duration _pingInterval = const Duration(seconds: 30);
   bool _doNotReconnect = false;
 
-  /// Called after a successful reconnection so the consumer can
-  /// re-authenticate and re-subscribe to collections.
+  String? _authRid;
+  Map<String, dynamic>? _authParams;
+  final _activeCollections = <ResCollection>[];
+
+  /// Called after a successful reconnection, re-authentication, and
+  /// re-subscription to all active collections.
   Future<void> Function()? onReconnect;
 
   /// Connect to the given Resgate server.
@@ -77,7 +81,17 @@ class ResClient {
 
     _pingTimer = Timer.periodic(_pingInterval, (_) => _ping());
 
-    if (isReconnect) onReconnect?.call();
+    if (isReconnect) unawaited(_onReconnected());
+  }
+
+  Future<void> _onReconnected() async {
+    if (_authRid != null && _authParams != null) {
+      await authenticate(_authRid!, _authParams!);
+    }
+    for (final collection in List.of(_activeCollections)) {
+      await collection.resubscribe();
+    }
+    await onReconnect?.call();
   }
 
   void _attemptReconnect() {
@@ -114,7 +128,14 @@ class ResClient {
     );
     collection.addModelsFromJson(json["result"] as Map<String, dynamic>);
     collection.listen();
+    _activeCollections.add(collection);
     return collection;
+  }
+
+  /// Removes a collection from reconnect tracking. Called by [ResCollection]
+  /// when it is destroyed.
+  void removeCollection(ResCollection collection) {
+    _activeCollections.remove(collection);
   }
 
   /// Send the credentials so it can be stored on this connection.
@@ -122,6 +143,8 @@ class ResClient {
     String rid,
     Map<String, dynamic> params,
   ) async {
+    _authRid = rid;
+    _authParams = params;
     var id = await send("auth", rid, params);
     final response = await receive(id);
     await _version();
@@ -136,8 +159,10 @@ class ResClient {
 
   Future<void> _ping() async {
     try {
-      await _version();
-    } catch (_) {}
+      await _version().timeout(_pingInterval);
+    } catch (_) {
+      _attemptReconnect();
+    }
   }
 
   /// Publish a Resgate message on the websocket channel.
