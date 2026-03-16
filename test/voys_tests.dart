@@ -305,11 +305,11 @@ void main() {
 
   test(
     'maintains an active Resgate connection over extended periods'
-    ' (5m, 10m, 30m, 90m)',
+    ' (5m, 10m, 30m, 90m, 2hr)',
     () async {
       if (Platform.environment['RUN_LONG_TESTS'] != 'true') {
         markTestSkipped(
-          'Long-running test (~2hr 15min) skipped by default.'
+          'Long-running test (~4hr 15min) skipped by default.'
           ' Use --run-long-tests flag to run.',
         );
         return;
@@ -339,6 +339,7 @@ void main() {
         Duration(minutes: 10),
         Duration(minutes: 30),
         Duration(minutes: 90),
+        Duration(hours: 2),
       ]) {
         print(
           '- Waiting ${_durationLabel(interval)} before next check...',
@@ -346,7 +347,7 @@ void main() {
         await Future.delayed(interval);
         print(
           '- ${_durationLabel(interval)} elapsed.'
-          ' Verifying Resgate updates are still received...',
+          ' Verifying Resgate connection is still active...',
         );
         await _toggleAndVerifyAvailability(
           ourModel,
@@ -360,7 +361,7 @@ void main() {
 
       await collection.destroy();
     },
-    timeout: const Timeout(Duration(hours: 3)),
+    timeout: const Timeout(Duration(hours: 6)),
   );
 }
 

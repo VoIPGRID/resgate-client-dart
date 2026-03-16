@@ -79,9 +79,30 @@ class ResCollection<T extends ResModel> {
     return model;
   }
 
+  /// Re-subscribe to this collection after a reconnect, updating existing
+  /// model objects in-place so that external references remain valid.
+  Future<void> resubscribe() async {
+    final id = await client.send("subscribe", rid, null);
+    final json = await client.receive(id);
+    _refreshModelsFromJson(json["result"] as Map<String, dynamic>);
+  }
+
+  void _refreshModelsFromJson(Map<String, dynamic> data) {
+    final freshData = <String, Map<String, dynamic>>{};
+    for (final item in data["collections"][rid] as Iterable) {
+      final modelRid = item["rid"] as String;
+      freshData[modelRid] = data["models"][modelRid] as Map<String, dynamic>;
+    }
+    for (final model in models) {
+      final fresh = freshData[model.rid];
+      if (fresh != null) model.updateFromJson(fresh);
+    }
+  }
+
   /// Unsubscribe from this collection and close the event streams
   /// Also closes the event stream of each model within this collection.
   Future<void> destroy() async {
+    client.removeCollection(this);
     await client.send("unsubscribe", rid, null);
 
     await addEventsController.close();
